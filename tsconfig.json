@@ -13,7 +13,5 @@
   ],
   "typeRoots": [
     "./node_modules/@types",
-    "./@types",
-    "./@types/Entry.d.ts"
   ]
 }

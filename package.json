@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "runServer": "npx tsc && cd dist && node index.js"
+    "start": "npx tsc && cd dist && node index.js"
   },
   "author": "",
   "license": "ISC",
