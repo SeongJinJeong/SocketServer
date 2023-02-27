@@ -1,4 +1,4 @@
-import {app, io} from "./index";
+import {app} from "./index";
 import {Namespace, Server, Socket} from "socket.io";
 
 interface PacketLobbyEntry {
@@ -25,27 +25,29 @@ class Lobby {
     private room: PacketRoomInfo[] = null;
 
     constructor() {
+        const io : Server = app.get('io');
+        const self = this;
         this.lobbyIo = io.of("/Lobby");
-        this.socket = app.get("socket");
-        this.initHandler();
+        this.lobbyIo.on("connection", function (socket) {
+            console.log("Lobby Connected!");
+            self.onConnect(socket);
+            self.socket = socket;
+            self.initHandler.call(self);
+        });
     }
 
     private initHandler(): void {
         const self = this;
-        this.lobbyIo.on("connection", function (socket) {
-            console.log("Lobby Connected!");
-            self.onConnect(socket);
-        });
 
-        this.lobbyIo.on("disconnect", function (socket) {
-            self.onDisconncet(socket);
+        this.socket.on("disconnect", function (socket) {
+            self.onDisconncet(null);
         });
 
 
-        this.lobbyIo.on("createRoom", function (roomData: PacketRoomInfo) {
+        this.socket.on("createRoom", function (roomData: PacketRoomInfo) {
             self.onCreateRoom(roomData);
         });
-        this.lobbyIo.on("enterRoom", function (roomid) {
+        this.socket.on("enterRoom", function (roomid) {
             self.onEnterRoom(roomid);
         });
     }

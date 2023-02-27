@@ -7,7 +7,7 @@ import NetHandler from "./netHandler";
 
 export const app : express.Express = express();
 const httpServer = createServer(app);
-export const io = new Server(httpServer, {
+const io = new Server(httpServer, {
     cors: {
         origin: "http://localhost:3000",
         methods: ["GET", "POST"]
@@ -20,6 +20,9 @@ io.on("connection", (socket) => {
     // ...
     console.log("Connected Player!");
     netHandler = new NetHandler(io,socket);
+    socket.on("disconnect",function(resason){
+        socket.disconnect();
+    })
 });
 
 app.use(cors());
