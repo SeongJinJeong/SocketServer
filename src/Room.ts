@@ -1,10 +1,12 @@
 import {app} from "./index";
 import {PacketCreateRoom} from "./netHandler";
 import {Server, Socket} from "socket.io";
+import Player from "./Player";
 
-class Room implements PacketCreateRoom{
+class Room implements PacketCreateRoom {
     io : Server = null;
     socket : Socket = null;
+    players : Player[] = null;
 
     public roomid : string = null;
     public roomName : string = null;
@@ -21,6 +23,28 @@ class Room implements PacketCreateRoom{
 
     public getRoomID() : string {
         return this.roomid;
+    }
+
+    public getRoomData() : {roomid : string, roomName : string} {
+        return {
+            roomid : this.roomid,
+            roomName : this.roomName
+        }
+    }
+
+    public getRoomPlayers() : Player[] {
+        return this.players;
+    }
+
+    public join(player : Player) {
+        if(this.players.indexOf(player) === -1)
+            this.players.push(player);
+    }
+
+    public leave(player : Player) : void {
+        if(this.players.indexOf(player) !== -1){
+            this.players[this.players.indexOf(player)] = null;
+        }
     }
 }
 
