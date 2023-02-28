@@ -14,15 +14,11 @@ const io = new Server(httpServer, {
     }
 });
 
-let netHandler : NetHandler = null;
+export let netHandler : NetHandler = null;
 
 io.on("connection", (socket) => {
-    // ...
-    console.log("Connected Player!");
+    console.log("Player Connected!");
     netHandler = new NetHandler(io,socket);
-    socket.on("disconnect",function(resason){
-        socket.disconnect();
-    })
 });
 
 app.use(cors());
