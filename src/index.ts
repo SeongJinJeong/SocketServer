@@ -5,7 +5,7 @@ import * as cors from "cors";
 
 import NetHandler from "./netHandler";
 
-export const app : express.Express = express();
+export const app: express.Express = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
@@ -14,19 +14,19 @@ const io = new Server(httpServer, {
     }
 });
 
-export let netHandler : NetHandler = null;
+export let netHandler: NetHandler = null;
 
 io.on("connection", (socket) => {
     console.log("Player Connected!");
-    netHandler = new NetHandler(io,socket);
+    netHandler = new NetHandler(io, socket);
 });
 
 app.use(cors());
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname+"");
+    res.sendFile(__dirname + "");
 })
 
-httpServer.listen(3231,function(){
+httpServer.listen(3231, function () {
     console.log("Server Started at 3231");
 });

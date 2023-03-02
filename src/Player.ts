@@ -78,12 +78,12 @@ class Player {
         return this.socket;
     }
 
-    public broadToRoom(msg: string, roomid? : string): void {
-        if(!!roomid){
-            this.socket.broadcast.to(roomid).emit("onMsg",Util.generateResponse(false, {msg}));
+    public broadToRoom(msg: string, roomid?: string): void {
+        if (!!roomid) {
+            this.socket.broadcast.to(roomid).emit("onMsg", Util.generateResponse(false, {msg}));
         } else {
-            this.joinedRoom.forEach((room)=>{
-                this.socket.broadcast.to(room.getRoomID()).emit("onMsg",Util.generateResponse(false, {msg}));
+            this.joinedRoom.forEach((room) => {
+                this.socket.broadcast.to(room.getRoomID()).emit("onMsg", Util.generateResponse(false, {msg}));
             })
         }
     }
@@ -108,7 +108,8 @@ export class PlayerContainer {
 
     public addPlayer(player: Player): void {
         this.players.push(player);
-        console.log("Player Count : " + this.players.length);
+        console.log(`New Player Login! \n Player Info \n ID : ${player.getPlayerData().playerID} \n Name : ${player.getPlayerData().name}`);
+        console.log("Current Online Player Count : " + this.players.length);
     }
 
     public removePlayer(player: Player): void {
@@ -118,7 +119,8 @@ export class PlayerContainer {
             this.players = this.players.filter(p => p);
         }
 
-        console.log("Current Player Count : " + this.players.length);
+        console.log(`Player Logout! \n Player Info \n ID : ${player.getPlayerData().playerID} \n Name : ${player.getPlayerData().name}`);
+        console.log("Current Online Player Count : " + this.players.length);
     }
 }
 

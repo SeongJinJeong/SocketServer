@@ -22,7 +22,7 @@ class RoomManager {
         return room;
     }
 
-    public async leaveRoom(roomid : string, io: Server): Promise<void> {
+    public async leaveRoom(roomid: string, io: Server): Promise<void> {
         const room = this.rooms.find((room) => room.getRoomID() === roomid);
         if (room === undefined)
             return;
@@ -34,17 +34,17 @@ class RoomManager {
         }
     }
 
-    public getRoom(roomid : string) : Room {
+    public getRoom(roomid: string): Room {
         const room = this.rooms.find(room => room.getRoomID() === roomid);
         return room || null;
     }
 
-    public async getRoomMemberCount(roomid : string, io : Server) : Promise<number> {
+    public async getRoomMemberCount(roomid: string, io: Server): Promise<number> {
         const member = await io.in(roomid).fetchSockets();
         return member.length;
     }
 
-    public getAllRoom() : Room[] {
+    public getAllRoom(): Room[] {
         return this.rooms;
     }
 }
