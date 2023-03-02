@@ -134,7 +134,6 @@ class NetHandler {
                 console.error("INVALID BET TYPE!");
                 break;
         }
-        manager.resetReadyCount();
     }
 
     public addListener(event: string, cb: (...args: any[]) => void): void {

@@ -6,19 +6,21 @@ import Util from "../Util";
 import {PacketGameInfo} from "../netHandler";
 
 const STATE = {
-    NONE : 0,
-    IDLE : 1,
-    READY : 2,
-    BET : 3,
-    BET_FINISH : 4,
-    TURN_OVER : 5
+    NONE: 0,
+    IDLE: 1,
+    READY: 2,
+    BET: 3,
+    BET_FINISH: 4,
+    TURN_OVER: 5
 }
 
-interface PlayerData  {
-    id : string
-    budget : number
-    callHalf : boolean
-    index : number
+interface PlayerData {
+    id: string
+    budget: number
+    callHalf: boolean
+    canHalf: boolean
+    index: number
+    betOver: boolean
 }
 
 class GameManager {
@@ -31,11 +33,10 @@ class GameManager {
 
     private currentPot: number = -1;
     private currentCall: number = -1;
-    private playerData : PlayerData[] = [];
+    private playerData: PlayerData[] = [];
     private currPlayerIndex: number = -1;
     private isAllIn: boolean = false;
-    private reachIndex : number = -1;
-    private startIndex : number = -1;
+    private lastHalfer: string = null;
 
     private playerReadyCount: number = 0;
 
@@ -55,12 +56,14 @@ class GameManager {
         this.currentPot = 0;
         this.currentCall = 0;
         this.currPlayerIndex = 0;
-        this.players.forEach((p,i) => {
+        this.players.forEach((p, i) => {
             this.playerData.push({
-                id : p.getPlayerData().playerID,
-                budget : this.gameData.budgetPerPlayer,
-                callHalf : false,
-                index : i
+                id: p.getPlayerData().playerID,
+                budget: this.gameData.budgetPerPlayer,
+                callHalf: false,
+                canHalf: true,
+                index: i,
+                betOver: false
             })
         });
         this.playerReadyCount = 0;
@@ -80,28 +83,53 @@ class GameManager {
         if (this.currPlayerIndex > this.players.length)
             this.currPlayerIndex = 0;
 
+        // 마지막 하프 뱃에서 멈추기.
+        if (this.playerData[this.currPlayerIndex].id === this.lastHalfer || this.playerData[this.currPlayerIndex].betOver) {
+            this.turnOver();
+            return;
+        }
+
         this.broadMessage("changePlayerTurn", Util.generateResponse(false, {
             playerIndex: this.currPlayerIndex,
             playerName: this.players[this.currPlayerIndex].getPlayerData().name
         }));
+        this.emitCurrPlayer();
 
         this.currPlayerIndex++;
+    }
+
+    private emitCurrPlayer() : void {
+        const playerData = this.getPlayerData(this.players[this.currPlayerIndex].getPlayerData().playerID);
+        this.players[this.currPlayerIndex].getSocket().emit("onBetEnable",Util.generateResponse(false, {
+            half : playerData.canHalf,
+            call : playerData.betOver,
+            allin : playerData.betOver
+        }));
     }
 
     public betHalf(player: Player): void {
         const bet = this.currentPot / 2;
         this.bet(player, bet);
+
+        this.lastHalfer = player.getPlayerData().playerID;
+        this.playerData.forEach((data) => {
+            data.betOver = false;
+        });
     }
 
     public betCall(player: Player): void {
         const bet = this.currentCall;
         this.bet(player, bet);
+        this.getPlayerData(player.getPlayerData().playerID).betOver = true;
+        this.getPlayerData(player.getPlayerData().playerID).canHalf = false;
     }
 
     public betAllIn(player: Player): void {
         const bet = this.getPlayerData(player.getPlayerData().playerID).budget;
         this.bet(player, bet);
         this.isAllIn = true;
+        this.getPlayerData(player.getPlayerData().playerID).betOver = true;
+        this.getPlayerData(player.getPlayerData().playerID).canHalf = false;
     }
 
     private bet(player: Player, bet: number): void {
@@ -118,11 +146,20 @@ class GameManager {
         }));
     }
 
+    private turnOver(): void {
+        this.broadMessage("turnOver", Util.generateResponse(false));
+        this.playerData.forEach((data) => {
+            data.betOver = false;
+        });
+        this.playerReadyCount = 0;
+        this.isAllIn = false;
+    }
+
     private broadMessage(event: string, msg: any): void {
         this.io.in(this.room.getRoomID()).emit(event, msg);
     }
 
-    private getPlayerData(id: string) : PlayerData {
+    private getPlayerData(id: string): PlayerData {
         return this.playerData.find(data => data.id === id);
     }
 
@@ -138,10 +175,6 @@ class GameManager {
             return "Big";
         else
             return "Normal";
-    }
-
-    public resetReadyCount(): void {
-        this.playerReadyCount = 0;
     }
 }
 
