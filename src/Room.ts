@@ -19,16 +19,18 @@ class Room implements PacketCreateRoom {
     private _init(roomid, roomName) : void {
         this.roomid = roomid;
         this.roomName = roomName;
+        this.players = [];
     }
 
     public getRoomID() : string {
         return this.roomid;
     }
 
-    public getRoomData() : {roomid : string, roomName : string} {
+    public getRoomData() : {roomid : string, roomName? : string, playerCount? : number} {
         return {
             roomid : this.roomid,
-            roomName : this.roomName
+            roomName : this.roomName,
+            playerCount : this.players.length
         }
     }
 
@@ -44,6 +46,7 @@ class Room implements PacketCreateRoom {
     public leave(player : Player) : void {
         if(this.players.indexOf(player) !== -1){
             this.players[this.players.indexOf(player)] = null;
+            this.players = this.players.filter(p => p);
         }
     }
 }

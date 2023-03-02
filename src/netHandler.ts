@@ -6,6 +6,7 @@ import RoomManager from "./RoomManager";
 import Player, {PlayerContainer} from "./Player";
 import * as crypto from "crypto";
 import LobbyRoom from "./LobbyRoom";
+import Util from "./Util";
 
 interface PacketEntry {
     playerID: number
@@ -38,6 +39,7 @@ class NetHandler {
         this.addListener("onEnterLobby", this.onEnterLobby.bind(this));
         this.addListener("onGetLobbyRooms",this.onGetLobbyRooms.bind(this));
         this.addListener("onEnterGameRoom",this.onEnterGameRoom.bind(this));
+        this.addListener("onLeaveGameRoom",this.onLeaveGameRoom.bind(this));
     }
 
     //region [ Listeners ]
@@ -65,7 +67,7 @@ class NetHandler {
         this.emitGameRoomData(msg.roomid);
     }
     private async onLeaveGameRoom(msg) : Promise<void> {
-        await this.player.leaveRoom(msg.roomid,this.io);
+        await this.player.leaveRoom(msg.roomid,this.io, this.socket);
         this.emitLeaveGameRoom(msg.roomid);
     }
 

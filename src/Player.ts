@@ -48,17 +48,19 @@ class Player {
         return true;
     }
 
-    public async leaveRoom(roomid: string, io : Server): Promise<void> {
+    public async leaveRoom(roomid: string, io : Server, socket : Socket): Promise<void> {
         const room = this.getJoinedRoom(roomid);
 
         if (!room)
-            console.log("Player is not in the room" + room.getRoomID());
+            console.log("Player is not in the room" + roomid);
         else {
             room.leave(this);
             await LobbyRoom.getInstance().leaveRoom(roomid,io);
             this.joinedRoom[this.joinedRoom.indexOf(room)] = null;
             this.joinedRoom = this.joinedRoom.filter(v => v);
         }
+
+        socket.leave(roomid);
     }
 
     public getJoinedRoom (roomid : string) : Room {
