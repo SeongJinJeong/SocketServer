@@ -32,14 +32,16 @@ class NetHandler {
 
         this._initListener();
     }
+
     private _initListener(): void {
         this.addListener("disconnect", this.onDisconnect.bind(this));
 
         this.addListener("onLogin", this.onLogin.bind(this));
         this.addListener("onEnterLobby", this.onEnterLobby.bind(this));
-        this.addListener("onGetLobbyRooms",this.onGetLobbyRooms.bind(this));
-        this.addListener("onEnterGameRoom",this.onEnterGameRoom.bind(this));
-        this.addListener("onLeaveGameRoom",this.onLeaveGameRoom.bind(this));
+        this.addListener("onGetLobbyRooms", this.onGetLobbyRooms.bind(this));
+        this.addListener("onEnterGameRoom", this.onEnterGameRoom.bind(this));
+        this.addListener("onChatGameRoom", this.onChatGameRoom.bind(this));
+        this.addListener("onLeaveGameRoom", this.onLeaveGameRoom.bind(this));
     }
 
     //region [ Listeners ]
@@ -51,23 +53,31 @@ class NetHandler {
 
     private onLogin(data: { name: string }): void {
         const id = crypto.getRandomValues(new Uint32Array(10)).toString();
-        this.player = new Player(data.name, id);
+        this.player = new Player(data.name, id, this.socket);
         PlayerContainer.getInstance().addPlayer(this.player);
         this.emitLoginSucceed();
     }
-    private onEnterLobby() : void {
+
+    private onEnterLobby(): void {
         this.player.setIsLobby(true);
         console.log("Entered Lobby!");
     }
-    private onGetLobbyRooms() : void {
+
+    private onGetLobbyRooms(): void {
         this.emitGetLobbyRooms();
     }
-    private async onEnterGameRoom(msg) : Promise<void> {
+
+    private async onEnterGameRoom(msg): Promise<void> {
         await this.player.joinRoom(msg.roomid, this.socket);
         this.emitGameRoomData(msg.roomid);
     }
-    private async onLeaveGameRoom(msg) : Promise<void> {
-        await this.player.leaveRoom(msg.roomid,this.io, this.socket);
+
+    private onChatGameRoom(msg: { msg: string, roomid: string }): void {
+        this.player.broadToRoom(msg.msg, msg.roomid);
+    }
+
+    private async onLeaveGameRoom(msg): Promise<void> {
+        await this.player.leaveRoom(msg.roomid, this.io, this.socket);
         this.emitLeaveGameRoom(msg.roomid);
     }
 
@@ -78,42 +88,46 @@ class NetHandler {
     //endregion
 
     //region [ Emitters ]
-    private emitLoginSucceed() : void {
+    private emitLoginSucceed(): void {
         const player = this.player.getPlayerData();
         const data = Util.generateResponse(false, {
-            name : player.name,
-            id : player.playerID
+            name: player.name,
+            id: player.playerID
         });
 
-        this.emitEvent("loginSucceed",data);
+        this.emitEvent("loginSucceed", data);
     }
-    private emitGetLobbyRooms() : void {
+
+    private emitGetLobbyRooms(): void {
         let roomDataArr = [];
-        LobbyRoom.getInstance().getAllRoom().forEach((room)=>{
+        LobbyRoom.getInstance().getAllRoom().forEach((room) => {
             roomDataArr.push(room.getRoomData());
         });
-        var data = Util.generateResponse(false, {rooms : roomDataArr});
+        var data = Util.generateResponse(false, {rooms: roomDataArr});
 
-        this.emitEvent("onGetLobbyRooms",data);
+        this.emitEvent("onGetLobbyRooms", data);
     }
-    private emitGameRoomData(roomid : string) : void {
-        const roomPlayers = LobbyRoom.getInstance().getRoom(roomid).getRoomPlayers().map(player=>{
+
+    private emitGameRoomData(roomid: string): void {
+        const roomPlayers = LobbyRoom.getInstance().getRoom(roomid).getRoomPlayers().map(player => {
             return {
-                name : player.getPlayerData().name
+                name: player.getPlayerData().name
             }
         });
         const roomData = LobbyRoom.getInstance().getRoom(roomid).getRoomData();
         const data = Util.generateResponse(false, {roomData, roomPlayers});
 
-        this.emitEvent("onGameRoomData",data)
+        this.emitEvent("onGameRoomData", data)
     }
-    private emitLeaveGameRoom(roomid : string) : void {
+
+    private emitLeaveGameRoom(roomid: string): void {
         this.emitEvent("onLeaveGameRoom", Util.generateResponse(false));
     }
 
-    private emitEvent(eventName : string, data : any) : void {
-        this.socket.emit(eventName,data);
+    private emitEvent(eventName: string, data: any): void {
+        this.socket.emit(eventName, data);
     }
+
     //endregion
 }
 

@@ -30,7 +30,7 @@ class RoomManager {
         const members = await io.in(roomid).fetchSockets();
         if (members.length === 0) {
             this.rooms[this.rooms.indexOf(room)] = null;
-            this.rooms = this.rooms.filter((val)=>val);
+            this.rooms = this.rooms.filter(room => room);
         }
     }
 
