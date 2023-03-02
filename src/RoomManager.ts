@@ -1,6 +1,7 @@
 import Room from "./Room";
 import room from "./Room";
 import {Server} from "socket.io";
+import GameRoom from "./Game/GameRoom";
 
 class RoomManager {
     rooms: Room[] = null;
@@ -34,7 +35,7 @@ class RoomManager {
         }
     }
 
-    public getRoom(roomid: string): Room {
+    public getRoom(roomid: string): Room | GameRoom {
         const room = this.rooms.find(room => room.getRoomID() === roomid);
         return room || null;
     }

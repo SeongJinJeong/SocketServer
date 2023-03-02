@@ -17,7 +17,6 @@ const io = new Server(httpServer, {
 export let netHandler: NetHandler = null;
 
 io.on("connection", (socket) => {
-    console.log("Player Connected!");
     netHandler = new NetHandler(io, socket);
 });
 

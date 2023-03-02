@@ -7,6 +7,7 @@ import Player, {PlayerContainer} from "./Player";
 import * as crypto from "crypto";
 import LobbyRoom from "./LobbyRoom";
 import Util from "./Util";
+import GameManager from "./Game/GameManager";
 
 interface PacketEntry {
     playerID: number
@@ -17,6 +18,13 @@ interface PacketEntry {
 export interface PacketCreateRoom {
     roomid: string,
     roomName: string,
+}
+
+export interface PacketGameInfo {
+    roomid: string
+    budgetPerPlayer: number
+    playerCount: number
+    timer: number
 }
 
 class NetHandler {
@@ -35,20 +43,30 @@ class NetHandler {
 
     private _initListener(): void {
         this.addListener("disconnect", this.onDisconnect.bind(this));
+        this._initRoomListeners();
+        this._initGameListeners();
+    }
 
+    private _initRoomListeners(): void {
         this.addListener("onLogin", this.onLogin.bind(this));
         this.addListener("onEnterLobby", this.onEnterLobby.bind(this));
         this.addListener("onGetLobbyRooms", this.onGetLobbyRooms.bind(this));
-        this.addListener("onEnterGameRoom", this.onEnterGameRoom.bind(this));
+        this.addListener("onEnterRoom", this.onEnterRoom.bind(this));
         this.addListener("onChatGameRoom", this.onChatGameRoom.bind(this));
         this.addListener("onLeaveGameRoom", this.onLeaveGameRoom.bind(this));
+    }
+
+    private _initGameListeners(): void {
+        this.addListener("onGameStart", this.onGameStart.bind(this));
+        this.addListener("onPlayerReady", this.onPlayerReady.bind(this));
+        this.addListener("onPlayerBet", this.onPlayerBet.bind(this));
     }
 
     //region [ Listeners ]
     private onDisconnect(reason: string): void {
         console.log("Disconnected Default : " + JSON.stringify(reason));
         this.socket.disconnect();
-        if(!!this.player)
+        if (!!this.player)
             PlayerContainer.getInstance().removePlayer(this.player);
     }
 
@@ -74,7 +92,7 @@ class NetHandler {
         this.emitGetLobbyRooms();
     }
 
-    private async onEnterGameRoom(msg): Promise<void> {
+    private async onEnterRoom(msg): Promise<void> {
         await this.player.joinRoom(msg.roomid, this.socket);
         this.emitGameRoomData(msg.roomid);
     }
@@ -86,6 +104,37 @@ class NetHandler {
     private async onLeaveGameRoom(msg): Promise<void> {
         await this.player.leaveRoom(msg.roomid, this.io, this.socket);
         this.emitLeaveGameRoom(msg.roomid);
+    }
+
+    // emit gameStart
+    private onGameStart(msg: PacketGameInfo): void {
+        LobbyRoom.getInstance().createGameRoom(msg);
+        LobbyRoom.getInstance().getGameRoom(msg.roomid).getManager().onGameStart();
+    }
+
+    private onPlayerReady(msg: { roomid: string }): void {
+        LobbyRoom.getInstance().getGameRoom(msg.roomid).getManager().playerReady();
+    }
+
+    private onPlayerBet(msg: { roomid: string, betType: string }): void {
+        const manager = LobbyRoom.getInstance().getGameRoom(msg.roomid).getManager();
+        switch (msg.betType.toLowerCase()) {
+            case "half" :
+                manager.betHalf(this.player);
+                break;
+            case "call":
+                manager.betCall(this.player);
+                break;
+            case "allin":
+                manager.betAllIn(this.player);
+                break;
+            case "die":
+                break;
+            default:
+                console.error("INVALID BET TYPE!");
+                break;
+        }
+        manager.resetReadyCount();
     }
 
     public addListener(event: string, cb: (...args: any[]) => void): void {

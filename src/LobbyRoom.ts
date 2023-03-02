@@ -1,6 +1,6 @@
 import RoomManager from "./RoomManager";
-import Room from "./Room";
-import Player from "./Player";
+import GameRoom from "./Game/GameRoom";
+import {PacketGameInfo} from "./netHandler";
 
 class LobbyRoom extends RoomManager {
     private static instance: LobbyRoom = null;
@@ -13,8 +13,20 @@ class LobbyRoom extends RoomManager {
         return this.instance;
     }
 
+    gameRooms : GameRoom[] = null;
     constructor() {
         super();
+        this.gameRooms = [];
+    }
+
+    public createGameRoom(msg: PacketGameInfo): void {
+        const room = new GameRoom(msg.roomid);
+        room.initGameRoom(this.getRoom(msg.roomid).getRoomPlayers(), msg);
+        this.gameRooms.push(room);
+    }
+
+    public getGameRoom(roomid : string) : GameRoom {
+        return this.gameRooms.find(room => room.getRoomID() === roomid);
     }
 }
 
