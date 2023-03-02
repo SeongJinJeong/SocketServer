@@ -48,11 +48,18 @@ class NetHandler {
     private onDisconnect(reason: string): void {
         console.log("Disconnected Default : " + JSON.stringify(reason));
         this.socket.disconnect();
-        PlayerContainer.getInstance().removePlayer(this.player);
+        if(!!this.player)
+            PlayerContainer.getInstance().removePlayer(this.player);
     }
 
     private onLogin(data: { name: string }): void {
-        const id = crypto.getRandomValues(new Uint32Array(10)).toString();
+        let id = "";
+        while (true) {
+            id = crypto.getRandomValues(new Uint32Array(1)).toString();
+            if (PlayerContainer.getInstance().checkIDValidate(id))
+                break;
+        }
+
         this.player = new Player(data.name, id, this.socket);
         PlayerContainer.getInstance().addPlayer(this.player);
         this.emitLoginSucceed();

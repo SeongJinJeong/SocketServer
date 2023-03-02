@@ -24,7 +24,7 @@ io.on("connection", (socket) => {
 app.use(cors());
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + "");
+    res.send("<h1>Socket Server</h1>")
 })
 
 httpServer.listen(3231, function () {

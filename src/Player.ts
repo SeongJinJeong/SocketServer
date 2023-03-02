@@ -122,6 +122,11 @@ export class PlayerContainer {
         console.log(`Player Logout! \n Player Info \n ID : ${player.getPlayerData().playerID} \n Name : ${player.getPlayerData().name}`);
         console.log("Current Online Player Count : " + this.players.length);
     }
+
+    public checkIDValidate(id: string): boolean {
+        return this.players.findIndex((player) => player.getPlayerData().playerID === id) === -1;
+    }
+
 }
 
 export default Player;
