@@ -25,6 +25,7 @@ export interface PacketGameInfo {
     budgetPerPlayer: number
     playerCount: number
     timer: number
+    entryFee : number
 }
 
 class NetHandler {
@@ -52,7 +53,7 @@ class NetHandler {
         this.addListener("onEnterLobby", this.onEnterLobby.bind(this));
         this.addListener("onGetLobbyRooms", this.onGetLobbyRooms.bind(this));
         this.addListener("onEnterRoom", this.onEnterRoom.bind(this));
-        this.addListener("onChatGameRoom", this.onChatGameRoom.bind(this));
+        this.addListener("onChatRoom", this.onChatRoom.bind(this));
         this.addListener("onLeaveGameRoom", this.onLeaveGameRoom.bind(this));
     }
 
@@ -97,13 +98,13 @@ class NetHandler {
         this.emitGameRoomData(msg.roomid);
     }
 
-    private onChatGameRoom(msg: { msg: string, roomid: string }): void {
-        this.player.broadToRoom(msg.msg, msg.roomid);
+    private onChatRoom(data: { msg: string, roomid: string }): void {
+        this.player.broadToRoom(data.msg, data.roomid);
     }
 
-    private async onLeaveGameRoom(msg): Promise<void> {
-        await this.player.leaveRoom(msg.roomid, this.io, this.socket);
-        this.emitLeaveGameRoom(msg.roomid);
+    private async onLeaveGameRoom(data : {roomid : string}): Promise<void> {
+        await this.player.leaveRoom(data.roomid, this.io, this.socket);
+        this.emitLeaveGameRoom(data.roomid);
     }
 
     // emit gameStart
