@@ -31,7 +31,7 @@ class GameManager {
 
     private state: number = -1;
 
-    private entryFee : number = 100;
+    private entryFee: number = 100;
     private currentPot: number = -1;
     private currentCall: number = -1;
     private playerData: PlayerData[] = [];
@@ -78,11 +78,12 @@ class GameManager {
     //todo : 나중에 플레이어 별로 Ready Property 만들어서 관리하자.
     public playerReady(): void {
         this.playerReadyCount++;
-        if (this.playerReadyCount >= 4)
+        if (this.playerReadyCount === this.players.length)
             this.changePlayerTurn();
     }
 
     private changePlayerTurn(): void {
+        this.playerReadyCount = 0;
         this.currPlayerIndex++;
         if (this.currPlayerIndex > this.players.length - 1)
             this.currPlayerIndex = 0;
@@ -118,31 +119,34 @@ class GameManager {
     }
 
     public betHalf(player: Player): void {
+        if (this.getPlayerData(player.getPlayerData().playerID).halfEnable === false) {
+            this.emitUnableBet(player);
+            return;
+        }
+
         let bet = this.currentPot / 2;
-        if(this.currentPot < this.entryFee)
+        if (this.currentPot < this.entryFee)
             bet = this.entryFee * 2;
 
         this.bet(player, bet);
-        this.setDataAfterBet(player.getPlayerData().playerID,"Half", bet);
+        this.setDataAfterBet(player.getPlayerData().playerID, "Half", bet);
     }
 
     public betCall(player: Player): void {
         let bet = this.currentCall;
         this.bet(player, bet);
-        this.setDataAfterBet(player.getPlayerData().playerID,"Call");
+        this.setDataAfterBet(player.getPlayerData().playerID, "Call");
     }
 
     public betAllIn(player: Player): void {
         const bet = this.getPlayerData(player.getPlayerData().playerID).budget;
         this.bet(player, bet);
-        this.setDataAfterBet(player.getPlayerData().playerID,"AllIn",bet);
+        this.setDataAfterBet(player.getPlayerData().playerID, "AllIn", bet);
     }
 
     private bet(player: Player, bet: number): void {
         if (this.getPlayerData(player.getPlayerData().playerID).budget < bet) {
-            player.getSocket().emit("unableBet", Util.generateResponse(false, {
-                betEnable : false
-            }));
+            this.emitUnableBet(player);
             return;
         }
 
@@ -151,13 +155,13 @@ class GameManager {
             playerName: player.getPlayerData().name,
             playerID: player.getPlayerData().playerID,
             betAmount: this.getChipAmount(bet),
-            bet : bet,
-            budget : this.getPlayerData(player.getPlayerData().playerID).budget
+            bet: bet,
+            budget: this.getPlayerData(player.getPlayerData().playerID).budget
         }));
         this.currentPot += bet;
     }
 
-    private setDataAfterBet(playerID: string, type: string, bet? : number): void {
+    private setDataAfterBet(playerID: string, type: string, bet?: number): void {
         this.currentCall = bet;
         switch (type.toLowerCase()) {
             case "half":
@@ -182,13 +186,18 @@ class GameManager {
         }
     }
 
+    private emitUnableBet(player: Player): void {
+        player.getSocket().emit("unableBet", Util.generateResponse(false, {
+            betEnable : false
+        }));
+    }
+
     private turnOver(): void {
         this.broadMessage("turnOver", Util.generateResponse(false));
         this.resetCurrentTurn();
     }
 
     private resetCurrentTurn(): void {
-        this.playerReadyCount = 0;
         this.allInBet = -1;
         this.playerData.forEach((data) => {
             data.betOver = false;

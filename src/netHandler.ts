@@ -74,7 +74,7 @@ class NetHandler {
     private onLogin(data: { name: string }): void {
         let id = "";
         while (true) {
-            id = crypto.getRandomValues(new Uint32Array(1)).toString();
+            id = crypto.webcrypto.getRandomValues(new Uint32Array(1)).toString();
             if (PlayerContainer.getInstance().checkIDValidate(id))
                 break;
         }
@@ -87,6 +87,7 @@ class NetHandler {
     private onEnterLobby(): void {
         this.player.setIsLobby(true);
         console.log("Entered Lobby!");
+        this.emitEnterLobbySucceed();
     }
 
     private onGetLobbyRooms(): void {
@@ -152,6 +153,10 @@ class NetHandler {
         });
 
         this.emitEvent("loginSucceed", data);
+    }
+
+    private emitEnterLobbySucceed() : void {
+        this.emitEvent("onEnterLobbySucceed",Util.generateResponse(false, {}));
     }
 
     private emitGetLobbyRooms(): void {
