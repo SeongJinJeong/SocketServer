@@ -71,7 +71,7 @@ class NetHandler {
             PlayerContainer.getInstance().removePlayer(this.player);
     }
 
-    private onLogin(data: { name: string }): void {
+    private onLogin(data: string): void {
         let id = "";
         while (true) {
             id = crypto.webcrypto.getRandomValues(new Uint32Array(1)).toString();
@@ -79,7 +79,8 @@ class NetHandler {
                 break;
         }
 
-        this.player = new Player(data.name, id, this.socket);
+        const parsedData = JSON.parse(data);
+        this.player = new Player(parsedData.name, id, this.socket);
         PlayerContainer.getInstance().addPlayer(this.player);
         this.emitLoginSucceed();
     }
@@ -186,7 +187,7 @@ class NetHandler {
     }
 
     private emitEvent(eventName: string, data: any): void {
-        this.socket.emit(eventName, data);
+        this.socket.emit(eventName, JSON.stringify(data));
     }
 
     //endregion
