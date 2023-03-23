@@ -71,7 +71,7 @@ class NetHandler {
             PlayerContainer.getInstance().removePlayer(this.player);
     }
 
-    private onLogin(data: string): void {
+    private onLogin(data: { name : string }): void {
         let id = "";
         while (true) {
             id = crypto.webcrypto.getRandomValues(new Uint32Array(1)).toString();
@@ -79,8 +79,7 @@ class NetHandler {
                 break;
         }
 
-        const parsedData = JSON.parse(data);
-        this.player = new Player(parsedData.name, id, this.socket);
+        this.player = new Player(data.name, id, this.socket);
         PlayerContainer.getInstance().addPlayer(this.player);
         this.emitLoginSucceed();
     }
@@ -139,8 +138,13 @@ class NetHandler {
         }
     }
 
+    public parser(cb : any, data : any) : void {
+        // 데이터가 string 으로 오면 파싱해줌.
+        const parsedData = typeof data === "string" ? JSON.stringify(data) : data;
+        cb(parsedData);
+    }
     public addListener(event: string, cb: (...args: any[]) => void): void {
-        this.socket.on(event, cb);
+        this.socket.on(event, this.parser.bind(this, cb));
     }
 
     //endregion
