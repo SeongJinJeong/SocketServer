@@ -1,13 +1,9 @@
-import {Socket, Server} from "socket.io";
+import {Server, Socket} from "socket.io";
 import {app} from "./index";
-import Room from "./Room";
-import room from "./Room";
-import RoomManager from "./RoomManager";
 import Player, {PlayerContainer} from "./Player";
 import * as crypto from "crypto";
 import LobbyRoom from "./LobbyRoom";
 import Util from "./Util";
-import GameManager from "./Game/GameManager";
 
 interface PacketEntry {
     playerID: number
@@ -138,10 +134,10 @@ class NetHandler {
         }
     }
 
-    public parser(cb : any, data : any) : void {
+    public parser(cb : any, data : any) : any {
         // 데이터가 string 으로 오면 파싱해줌.
-        const parsedData = typeof data === "string" ? JSON.stringify(data) : data;
-        cb(parsedData);
+        const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+        return cb(parsedData);
     }
     public addListener(event: string, cb: (...args: any[]) => void): void {
         this.socket.on(event, this.parser.bind(this, cb));
