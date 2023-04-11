@@ -136,7 +136,12 @@ class NetHandler {
 
     public parser(cb : any, data : any) : any {
         // 데이터가 string 으로 오면 파싱해줌.
-        const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+        let parsedData = null;
+        try {
+            parsedData = typeof data === "string" ? JSON.parse(data) : data;
+        } catch (err) {
+            console.log("Not Json Data:"+data);
+        }
         return cb(parsedData);
     }
     public addListener(event: string, cb: (...args: any[]) => void): void {
