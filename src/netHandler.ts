@@ -48,6 +48,7 @@ class NetHandler {
         this.addListener("onLogin", this.onLogin.bind(this));
         this.addListener("onEnterLobby", this.onEnterLobby.bind(this));
         this.addListener("onGetLobbyRooms", this.onGetLobbyRooms.bind(this));
+        this.addListener("onGetRoomData",this.onGetRoomData.bind(this));
         this.addListener("onEnterRoom", this.onEnterRoom.bind(this));
         this.addListener("onChatRoom", this.onChatRoom.bind(this));
         this.addListener("onLeaveGameRoom", this.onLeaveGameRoom.bind(this));
@@ -95,6 +96,10 @@ class NetHandler {
         this.emitGameRoomData(msg.roomid);
     }
 
+    private onGetRoomData(msg) : void {
+        this.emitGameRoomData(msg.roomid);
+    }
+
     private onChatRoom(data: { msg: string, roomid: string }): void {
         this.player.broadToRoom(data.msg, data.roomid);
     }
@@ -103,6 +108,7 @@ class NetHandler {
         await this.player.leaveRoom(data.roomid, this.io, this.socket);
         this.emitLeaveGameRoom(data.roomid);
     }
+
 
     // emit gameStart
     private onGameStart(msg: PacketGameInfo): void {
