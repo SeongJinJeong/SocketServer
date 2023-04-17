@@ -45,7 +45,14 @@ class GameManager {
     }
 
     private _startGame(): void {
-        this.gameController = new GameController(this, this.players.length);
+        let gameStartData = this.playerData.map((value)=>{
+            return {
+                budget : value.budget
+            }
+        });
+        
+        this.gameController = new GameController(this, this.players.length,gameStartData);
+        this.gameController.startGame();
         this.broadMessage("gameStart", Util.generateResponse(false));
     }
     
@@ -69,7 +76,9 @@ class GameManager {
                     budget : data.budget
                 }
             })
-        }))
+        }));
+        
+        this.gameController = null;
     }
 
     public broadMessage(event: string, msg: any): void {

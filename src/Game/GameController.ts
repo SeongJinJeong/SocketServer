@@ -38,10 +38,10 @@ class GameController {
 
     private readyCount: number = -1;
 
-    constructor(owner: GameManager, playerCount: number) {
+    constructor(owner: GameManager, playerCount: number, gameStartData : {budget : number}[]) {
         this.gameManager = owner;
         this._initVars(playerCount);
-        this._init();
+        this._init(gameStartData);
     }
 
     private _initVars(playerCount: number): void {
@@ -61,8 +61,10 @@ class GameController {
         }
     }
 
-    private _init(): void {
-
+    private _init(gameStartData : {budget : number}[]): void {
+        for(let i=0; i<this.playerBetInfo.length; i++){
+            this.playerBetInfo[i].currentBudget = gameStartData[i].budget;
+        }
     }
 
     public startGame(): void {
