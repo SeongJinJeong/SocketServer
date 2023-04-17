@@ -1,5 +1,4 @@
 import Room from "./Room";
-import room from "./Room";
 import {Server} from "socket.io";
 import GameRoom from "./Game/GameRoom";
 
@@ -23,12 +22,12 @@ class RoomManager {
         return room;
     }
 
-    public async leaveRoom(roomid: string, io: Server): Promise<void> {
+    public async leaveRoom(roomid : string,io: Server): Promise<void> {
         const room = this.rooms.find((room) => room.getRoomID() === roomid);
         if (room === undefined)
             return;
 
-        const members = await io.in(roomid).fetchSockets();
+        const members = await io.in(room.getRoomID()).fetchSockets();
         if (members.length === 0) {
             this.rooms[this.rooms.indexOf(room)] = null;
             this.rooms = this.rooms.filter(room => room);
@@ -38,11 +37,6 @@ class RoomManager {
     public getRoom(roomid: string): Room | GameRoom {
         const room = this.rooms.find(room => room.getRoomID() === roomid);
         return room || null;
-    }
-
-    public async getRoomMemberCount(roomid: string, io: Server): Promise<number> {
-        const member = await io.in(roomid).fetchSockets();
-        return member.length;
     }
 
     public getAllRoom(): Room[] {

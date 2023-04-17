@@ -1,7 +1,7 @@
 import Room from "./Room";
 import RoomManager from "./RoomManager";
 import {Server, Socket} from "socket.io";
-import LobbyRoom from "./LobbyRoom";
+import LobbyRoomManager from "./LobbyRoomManager";
 import Util from "./Util";
 
 export interface PlayerData {
@@ -14,13 +14,13 @@ class Player {
     private isLobby: boolean = false;
     private name: string = null;
     private playerID: string = null;
-    private joinedRoom: Room[] = null;
+    private joinedRoom: Room = null;
     private socket: Socket = null;
 
     constructor(name: string, playerID: string, socket: Socket) {
         this.name = name;
         this.playerID = playerID;
-        this.joinedRoom = [];
+        this.joinedRoom = null;
         this.socket = socket;
     }
 
@@ -31,43 +31,39 @@ class Player {
         }
     }
 
-    public async joinRoom(roomid: string, socket: Socket): Promise<boolean> {
-        let room = LobbyRoom.getInstance().getRoom(roomid);
+    public async joinRoom(roomid: string): Promise<boolean> {
+        let room = LobbyRoomManager.getInstance().getRoom(roomid);
         if (!!room) {
-            if (this.getJoinedRoom(room.getRoomID())) {
+            const joinedRoom : Room = this.getJoinedRoom();
+            if (!!joinedRoom && joinedRoom.getRoomID() === roomid) {
                 console.log("Already joined the Room!");
                 return false;
             }
 
-            this.joinedRoom.push(room);
-            room.join(this);
+            this.joinedRoom = room;
+            await room.join(this);
         } else {
-            room = LobbyRoom.getInstance().createRoom(roomid);
-            this.joinedRoom.push(room);
-            room.join(this);
+            room = LobbyRoomManager.getInstance().createRoom(roomid);
+            this.joinedRoom = room;
+            await room.join(this);
         }
-
-        await socket.join(roomid);
 
         return true;
     }
 
-    public async leaveRoom(roomid: string, io: Server, socket: Socket): Promise<void> {
-        await socket.leave(roomid);
-        const room = this.getJoinedRoom(roomid);
+    public async leaveRoom(): Promise<void> {
+        const room = this.getJoinedRoom();
 
         if (!room)
-            console.log("Player is not in the room" + roomid);
+            console.log("Player is not in the room");
         else {
-            room.leave(this);
-            await LobbyRoom.getInstance().leaveRoom(roomid, io);
-            this.joinedRoom[this.joinedRoom.indexOf(room)] = null;
-            this.joinedRoom = this.joinedRoom.filter(v => v);
+            await room.leave(this);
+            this.joinedRoom = null;
         }
     }
 
-    public getJoinedRoom(roomid: string): Room {
-        return this.joinedRoom.find(room => room.getRoomID() === roomid);
+    public getJoinedRoom(): Room {
+        return this.joinedRoom;
     }
 
     public setIsLobby(isLobby: boolean): void {
@@ -78,14 +74,8 @@ class Player {
         return this.socket;
     }
 
-    public broadToRoom(msg: string, roomid?: string): void {
-        if (!!roomid) {
-            this.socket.broadcast.to(roomid).emit("onMsg", Util.generateResponse(false, {msg}));
-        } else {
-            this.joinedRoom.forEach((room) => {
-                this.socket.broadcast.to(room.getRoomID()).emit("onMsg", Util.generateResponse(false, {msg}));
-            })
-        }
+    public broadToRoom(msg: string): void {
+        this.getJoinedRoom().broadcast("broadcast",{msg}, this.socket);
     }
 }
 
@@ -101,7 +91,6 @@ export class PlayerContainer {
     private static instance: PlayerContainer = null;
 
     players: Player[] = null;
-
     constructor() {
         this.players = [];
     }
