@@ -4,12 +4,6 @@ import {Server, Socket} from "socket.io";
 import LobbyRoomManager from "./LobbyRoomManager";
 import Util from "./Util";
 
-export interface PlayerData {
-    name: string
-    playerID: string
-    joinedRoom?: Room[]
-}
-
 class Player {
     private isLobby: boolean = false;
     private name: string = null;

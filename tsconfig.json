@@ -3,7 +3,11 @@
     "module": "commonjs",
     "target": "es5",
     "sourceMap": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types/DataType.d.ts"
+    ]
   },
   "include": [
     "./src/**/*.ts"
@@ -11,7 +15,4 @@
   "exclude": [
     "node_modules"
   ],
-  "typeRoots": [
-    "./node_modules/@types",
-  ]
 }

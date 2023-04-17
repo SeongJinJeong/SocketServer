@@ -3,10 +3,11 @@ import {Server, Socket} from "socket.io";
 import Player from "./Player";
 import Util from "./Util";
 import LobbyRoomManager from "./LobbyRoomManager";
+import player from "./Player";
 
 class Room {
-    io: Server = null;
-    players: Player[] = null;
+    protected readonly io: Server = null;
+    protected players: Player[] = null;
 
     private roomid: string = null;
     private roomName: string = null;
@@ -26,10 +27,10 @@ class Room {
         return this.roomid;
     }
 
-    public getRoomData(): { roomid: string, player : {[key:string] : any}  } {
+    public getRoomData(): PacketEmitRoomData {
         return {
             roomid: this.roomid,
-            player : this.players.map((player)=>{
+            playerData : this.players.map((player)=>{
                 return {
                     id : player.getPlayerData().playerID,
                     name : player.getPlayerData().name
@@ -41,6 +42,12 @@ class Room {
     public getRoomPlayers(): Player[] {
         return this.players;
     }
+    
+    public getRoomPlayer(playerId : string) : Player {
+        return this.players.find((player)=>{
+            return player.getPlayerData().playerID === playerId
+        });
+    }
 
     public async join(player: Player) {
         if (this.players.indexOf(player) === -1) {
@@ -51,14 +58,14 @@ class Room {
     private async onNewPlayerJoinRoom(player: Player) {
         this.players.push(player);
         await player.getSocket().join(this.getRoomID());
-        player.getSocket().broadcast.to(this.roomid).emit("onMsg", Util.generateResponse(false, {
+        player.getSocket().broadcast.to(this.roomid).emit("onPlayerJoin", Util.generateResponse(false, {
             msg: "New User Joined!",
             playerName : player.getPlayerData().name
         }));
     }
 
     public broadcast(eventName : string, msg : any, socket : Socket) : void {
-        this.io.to(this.getRoomID()).emit(eventName, JSON.stringify(Util.generateResponse(false, {msg})));
+        this.io.in(this.getRoomID()).emit(eventName, JSON.stringify(Util.generateResponse(false, {msg})));
     }
 
     public async leave(player: Player) {
@@ -71,7 +78,7 @@ class Room {
     private async onUserLeaveRoom(index: number, player : Player) {
         await player.getSocket().leave(this.getRoomID());
         await LobbyRoomManager.getInstance().leaveRoom(player.getJoinedRoom().getRoomID(), this.io);
-        this.players[index].getSocket().broadcast.to(this.roomid).emit("onMsg", Util.generateResponse(false,{
+        this.players[index].getSocket().broadcast.to(this.roomid).emit("onPlayerLeave", Util.generateResponse(false,{
             msg: "User Leaved!",
             playerName: this.players[index].getPlayerData().name
         }));
@@ -79,6 +86,7 @@ class Room {
         this.players = this.players.filter(p => p);
     }
 
+    //region [ Destroy Process ]
     public async destroy() {
         await this._leaveAllUser();
         await this._removeFromManager();
@@ -93,6 +101,7 @@ class Room {
     private async _removeFromManager() : Promise<void> {
         await LobbyRoomManager.getInstance().leaveRoom(this.getRoomID(),this.io);
     }
+    //endregion
 }
 
 export default Room;

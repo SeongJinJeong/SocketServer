@@ -1,13 +1,15 @@
 import Room from "../Room";
 import GameManager from "./GameManager";
 import Player from "../Player";
-import {PacketGameInfo} from "../netHandler";
 
 class GameRoom extends Room {
     private manager: GameManager = null;
 
-    public initGameRoom(players: Player[], data: PacketGameInfo): void {
+    public async initGameRoom(players: Player[], data: PacketGameInfo): Promise<void> {
         this.players = players;
+        for (const player of this.players) {
+            await player.joinRoom(this.getRoomID());
+        }
         this.manager = new GameManager(this, this.players, data);
     }
 

@@ -1,6 +1,5 @@
 import RoomManager from "./RoomManager";
 import GameRoom from "./Game/GameRoom";
-import {PacketGameInfo} from "./netHandler";
 import {Server, Socket} from "socket.io";
 import {app} from "./index"
 
